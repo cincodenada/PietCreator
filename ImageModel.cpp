@@ -124,6 +124,18 @@ QImage ImageModel::image() const
     return mImage;
 }
 
+void ImageModel::moveSection(QModelIndex &topLeft, QModelIndex &bottomRight, QModelIndex &dest)
+{
+    QImage mSelectionImage = mImage.copy(
+        topLeft.column(),
+        topLeft.row(),
+        bottomRight.column() - topLeft.column(),
+        bottomRight.row() - topLeft.row()
+    );
+
+    insertImage(mSelectionImage, dest.column(), dest.row());
+}
+
 void ImageModel::insertImage(const QImage& _image, int x, int y)
 {
     QImage newImage = autoScale(_image, -1);

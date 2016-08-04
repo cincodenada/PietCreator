@@ -50,6 +50,7 @@ public:
     void newImage( int w, int h );
     QImage image() const;
 
+    void moveSection(QModelIndex &topLeft, QModelIndex &bottomRight, QModelIndex &dest);
     /**
      * Insert the image at the specified x,y coord
      */

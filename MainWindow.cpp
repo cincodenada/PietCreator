@@ -52,7 +52,7 @@ MainWindow::MainWindow( QWidget *parent ) :
     mModified( false ),
     mWaitInt( false ),
     mWaitChar( false ),
-    mWaitingForCoordSelection( false )
+    mCoordSelection( NONE )
 {
     ui->setupUi( this );
     setWindowIcon( QIcon( ":/piet-16x16.png" ) );
@@ -205,6 +205,11 @@ void MainWindow::setupToolbar()
     connect( this, SIGNAL( validImageDocument( bool ) ), cycleValueAct, SLOT( setEnabled( bool ) ) );
     editMenu->addAction( cycleValueAct );
 
+    QAction* moveAct = ui->mToolBar->addAction( QIcon::fromTheme( "edit-select-all" ), tr( "&Move Selection" ), this, SLOT( slotActionMoveSelection() ) );
+    moveAct->setDisabled( true );
+    connect( this, SIGNAL( validImageDocument( bool ) ), moveAct, SLOT( setEnabled( bool ) ) );
+    editMenu->addAction( moveAct );
+
     ui->mToolBar->addSeparator();
 
     QMenu* viewMenu = ui->mMenubar->addMenu( tr( "&View" ) );
@@ -277,15 +282,38 @@ bool MainWindow::eventFilter( QObject* obj, QEvent* event )
         }
     } else if (event->type() == QEvent::MouseButtonPress ) {
         QMouseEvent * mevent = static_cast<QMouseEvent*>( event );
-        if ( obj == ui->mView->viewport() && mWaitingForCoordSelection && mevent->button() == Qt::LeftButton ) {
-            QModelIndex i = ui->mView->indexAt(mevent->pos());
-            setCursor(Qt::ArrowCursor);
-            mWaitingForCoordSelection = false;
-            int x = i.column();
-            int y = i.row();
-            mUndoHandler->insertImage(x, y, mInsertImage);
-            mStatusLabel->clear();
-            return true;
+        if ( obj == ui->mView->viewport() && mCoordSelection != NONE && mevent->button() == Qt::LeftButton ) {
+            if(mCoordSelection == INSERT_IMAGE) {
+                QModelIndex i = ui->mView->indexAt(mevent->pos());
+                setCursor(Qt::ArrowCursor);
+                mCoordSelection = NONE;
+                int x = i.column();
+                int y = i.row();
+                mUndoHandler->insertImage(x, y, mInsertImage);
+                mStatusLabel->clear();
+                return true;
+            } else if(mCoordSelection == MOVE_SEL_START) {
+                mSelStartCorner = ui->mView->indexAt(mevent->pos());
+                mCoordSelection = MOVE_SEL_END;
+                mStatusLabel->setText( tr("Click second corner of area to move") );
+                return true;
+            } else if(mCoordSelection == MOVE_SEL_END) {
+                mSelEndCorner = ui->mView->indexAt(mevent->pos());
+                mCoordSelection = MOVE_FINISH;
+                mStatusLabel->setText( tr("Click upper-left corner of destination") );
+                return true;
+            } else if(mCoordSelection == MOVE_FINISH) {
+                QModelIndex dest = ui->mView->indexAt(mevent->pos());
+                setCursor(Qt::ArrowCursor);
+                mCoordSelection = NONE;
+                mModel->moveSection(
+                    mSelStartCorner,
+                    mSelEndCorner,
+                    dest
+                );
+                mStatusLabel->clear();
+                return true;
+            }
         }
     }
     return false;
@@ -459,10 +487,18 @@ void MainWindow::slotActionInsert()
     mInsertImage = QImage(file_name);
     if ( !mInsertImage.isNull() ) {
         setCursor(Qt::CrossCursor);
-        mWaitingForCoordSelection = true;
+        mCoordSelection = INSERT_IMAGE;
         mStatusLabel->setText( tr("Click upper left coordinate to insert image") );
     }
 }
+
+void MainWindow::slotActionMoveSelection()
+{
+    setCursor(Qt::CrossCursor);
+    mCoordSelection = MOVE_SEL_START;
+    mStatusLabel->setText( tr("Click first corner of area to move") );
+}
+
 
 void MainWindow::slotActionCycleHue()
 {

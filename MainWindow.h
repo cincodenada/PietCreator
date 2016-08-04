@@ -24,6 +24,7 @@
 #include <QHash>
 #include <QUrl>
 #include <QThread>
+#include <QModelIndex>
 
 namespace Ui
 {
@@ -70,6 +71,7 @@ private slots:
     void slotActionNew();
     void slotActionResize();
     void slotActionInsert();
+    void slotActionMoveSelection();
     void slotActionCycleHue();
     void slotActionCycleValue();
     void slotActionZoom();
@@ -119,8 +121,12 @@ private:
     bool mModified;
     bool mWaitInt;
     bool mWaitChar;
-    bool mWaitingForCoordSelection;
     QImage mInsertImage;
+
+    enum mSelectionStatus { NONE, INSERT_IMAGE, MOVE_SEL_START, MOVE_SEL_END, MOVE_FINISH };
+    QModelIndex mSelStartCorner;
+    QModelIndex mSelEndCorner;
+    mSelectionStatus mCoordSelection;
 };
 
 #endif // MAINWINDOW_H
