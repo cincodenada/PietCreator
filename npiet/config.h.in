@@ -1,3 +1,0 @@
-#cmakedefine HAVE_GD_H
-#cmakedefine HAVE_PNG_H
-#cmakedefine HAVE_GIF_LIB_H
