@@ -55,6 +55,8 @@ public:
      */
     void insertImage( const QImage &image, int x, int y);
 
+    void cycleColors(int direction);
+
     void scaleImage( const QSize & size );
     QSize imageSize() const;
 

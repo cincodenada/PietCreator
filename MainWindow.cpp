@@ -195,6 +195,16 @@ void MainWindow::setupToolbar()
     connect( this, SIGNAL( validImageDocument( bool ) ), insertAct, SLOT( setEnabled( bool ) ) );
     editMenu->addAction( insertAct );
 
+    QAction* cycleHueAct = ui->mToolBar->addAction( QIcon::fromTheme( "go-down" ), tr( "&Cycle Hue" ), this, SLOT( slotActionCycleHue() ) );
+    cycleHueAct->setDisabled( true );
+    connect( this, SIGNAL( validImageDocument( bool ) ), cycleHueAct, SLOT( setEnabled( bool ) ) );
+    editMenu->addAction( cycleHueAct );
+
+    QAction* cycleValueAct = ui->mToolBar->addAction( QIcon::fromTheme( "go-next" ), tr( "&Cycle Value" ), this, SLOT( slotActionCycleValue() ) );
+    cycleValueAct->setDisabled( true );
+    connect( this, SIGNAL( validImageDocument( bool ) ), cycleValueAct, SLOT( setEnabled( bool ) ) );
+    editMenu->addAction( cycleValueAct );
+
     ui->mToolBar->addSeparator();
 
     QMenu* viewMenu = ui->mMenubar->addMenu( tr( "&View" ) );
@@ -454,6 +464,15 @@ void MainWindow::slotActionInsert()
     }
 }
 
+void MainWindow::slotActionCycleHue()
+{
+    mModel->cycleColors(1);
+}
+
+void MainWindow::slotActionCycleValue()
+{
+    mModel->cycleColors(0);
+}
 
 void MainWindow::slotActionZoom()
 {

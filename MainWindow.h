@@ -70,6 +70,8 @@ private slots:
     void slotActionNew();
     void slotActionResize();
     void slotActionInsert();
+    void slotActionCycleHue();
+    void slotActionCycleValue();
     void slotActionZoom();
     void slotActionDebug();
     void slotActionRun();

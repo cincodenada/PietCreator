@@ -157,6 +157,36 @@ void ImageModel::insertImage(const QImage& _image, int x, int y)
     reset();
 }
 
+void ImageModel::cycleColors(int direction)
+{
+    for(int x = 0; x < mImage.width(); x++) {
+        for(int y = 0; y < mImage.height(); y++) {
+            QRgb curRgb = mImage.pixel(x,y);
+            int curColor = get_color_idx(curRgb & 0xffffff);
+            if(curColor != -1 && curColor != c_black && curColor != c_white) {
+                int newColor;
+                if(direction == 0) {
+                    newColor = (curColor + n_hue) % (n_hue*n_light);
+                } else {
+                    int base = curColor - (curColor % n_hue);
+                    newColor = base + (curColor + 1) % n_hue;
+                }
+                //QModelIndex newindex = index(
+                   // QAbstractItemModel::createIndex(y, x);
+                int rgb = get_idx_col(newColor)->col;
+                QColor outColor = QColor(
+                    (rgb >> 16),
+                    (rgb >> 8) & 0xff,
+                    rgb & 0xff
+                );
+                qDebug() << curColor << "->" << newColor;
+
+                setData(index( y, x ), outColor, Qt::DisplayRole);
+            }
+        }
+    }
+}
+
 void ImageModel::setDebuggedPixel( int x, int y )
 {
     emitNeighborsChanged( mDebugPixel.y(), mDebugPixel.x() );
