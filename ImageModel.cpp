@@ -124,13 +124,13 @@ QImage ImageModel::image() const
     return mImage;
 }
 
-void ImageModel::moveSection(QModelIndex &topLeft, QModelIndex &bottomRight, QModelIndex &dest)
+void ImageModel::moveSection(QRect &sel, QModelIndex &dest)
 {
     QImage mSelectionImage = mImage.copy(
-        topLeft.column(),
-        topLeft.row(),
-        bottomRight.column() - topLeft.column(),
-        bottomRight.row() - topLeft.row()
+        sel.left(),
+        sel.top(),
+        sel.width(),
+        sel.height()
     );
 
     insertImage(mSelectionImage, dest.column(), dest.row());
@@ -171,8 +171,12 @@ void ImageModel::insertImage(const QImage& _image, int x, int y)
 
 void ImageModel::cycleColors(int direction)
 {
-    for(int x = 0; x < mImage.width(); x++) {
-        for(int y = 0; y < mImage.height(); y++) {
+  cycleColors(direction, mImage.rect());
+}
+void ImageModel::cycleColors(int direction, QRect area)
+{
+    for(int x = area.left(); x <= area.right(); x++) {
+        for(int y = area.top(); y <= area.bottom(); y++) {
             QRgb curRgb = mImage.pixel(x,y);
             int curColor = get_color_idx(curRgb & 0xffffff);
             if(curColor != -1 && curColor != c_black && curColor != c_white) {

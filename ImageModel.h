@@ -50,13 +50,14 @@ public:
     void newImage( int w, int h );
     QImage image() const;
 
-    void moveSection(QModelIndex &topLeft, QModelIndex &bottomRight, QModelIndex &dest);
+    void moveSection(QRect &sel, QModelIndex &dest);
     /**
      * Insert the image at the specified x,y coord
      */
     void insertImage( const QImage &image, int x, int y);
 
     void cycleColors(int direction);
+    void cycleColors(int direction, QRect area);
 
     void scaleImage( const QSize & size );
     QSize imageSize() const;

@@ -71,9 +71,10 @@ private slots:
     void slotActionNew();
     void slotActionResize();
     void slotActionInsert();
-    void slotActionMoveSelection();
+    void slotActionStartSelection();
     void slotActionCycleHue();
     void slotActionCycleValue();
+    void slotActionMoveSelection();
     void slotActionZoom();
     void slotActionDebug();
     void slotActionRun();
@@ -123,9 +124,11 @@ private:
     bool mWaitChar;
     QImage mInsertImage;
 
-    enum mSelectionStatus { NONE, INSERT_IMAGE, MOVE_SEL_START, MOVE_SEL_END, MOVE_FINISH };
+    enum mSelectionStatus { NONE, INSERT_IMAGE, SEL_START, SEL_END, COPY };
     QModelIndex mSelStartCorner;
     QModelIndex mSelEndCorner;
+    QRect mSelection;
+    bool mSelActive;
     mSelectionStatus mCoordSelection;
 };
 

@@ -52,7 +52,8 @@ MainWindow::MainWindow( QWidget *parent ) :
     mModified( false ),
     mWaitInt( false ),
     mWaitChar( false ),
-    mCoordSelection( NONE )
+    mCoordSelection( NONE ),
+    mSelActive( false )
 {
     ui->setupUi( this );
     setWindowIcon( QIcon( ":/piet-16x16.png" ) );
@@ -195,6 +196,11 @@ void MainWindow::setupToolbar()
     connect( this, SIGNAL( validImageDocument( bool ) ), insertAct, SLOT( setEnabled( bool ) ) );
     editMenu->addAction( insertAct );
 
+    QAction* selAct = ui->mToolBar->addAction( QIcon::fromTheme( "edit-select-all" ), tr( "&Select" ), this, SLOT( slotActionStartSelection() ) );
+    selAct->setDisabled( true );
+    connect( this, SIGNAL( validImageDocument( bool ) ), selAct, SLOT( setEnabled( bool ) ) );
+    editMenu->addAction( selAct );
+
     QAction* cycleHueAct = ui->mToolBar->addAction( QIcon::fromTheme( "go-down" ), tr( "&Cycle Hue" ), this, SLOT( slotActionCycleHue() ) );
     cycleHueAct->setDisabled( true );
     connect( this, SIGNAL( validImageDocument( bool ) ), cycleHueAct, SLOT( setEnabled( bool ) ) );
@@ -205,7 +211,7 @@ void MainWindow::setupToolbar()
     connect( this, SIGNAL( validImageDocument( bool ) ), cycleValueAct, SLOT( setEnabled( bool ) ) );
     editMenu->addAction( cycleValueAct );
 
-    QAction* moveAct = ui->mToolBar->addAction( QIcon::fromTheme( "edit-select-all" ), tr( "&Move Selection" ), this, SLOT( slotActionMoveSelection() ) );
+    QAction* moveAct = ui->mToolBar->addAction( QIcon::fromTheme( "edit-copy" ), tr( "&Copy Selection" ), this, SLOT( slotActionMoveSelection() ) );
     moveAct->setDisabled( true );
     connect( this, SIGNAL( validImageDocument( bool ) ), moveAct, SLOT( setEnabled( bool ) ) );
     editMenu->addAction( moveAct );
@@ -283,37 +289,53 @@ bool MainWindow::eventFilter( QObject* obj, QEvent* event )
     } else if (event->type() == QEvent::MouseButtonPress ) {
         QMouseEvent * mevent = static_cast<QMouseEvent*>( event );
         if ( obj == ui->mView->viewport() && mCoordSelection != NONE && mevent->button() == Qt::LeftButton ) {
-            if(mCoordSelection == INSERT_IMAGE) {
-                QModelIndex i = ui->mView->indexAt(mevent->pos());
+            QModelIndex clickedIndex = ui->mView->indexAt(mevent->pos());
+            switch (mCoordSelection) {
+            case INSERT_IMAGE:
                 setCursor(Qt::ArrowCursor);
                 mCoordSelection = NONE;
-                int x = i.column();
-                int y = i.row();
-                mUndoHandler->insertImage(x, y, mInsertImage);
+                mUndoHandler->insertImage(clickedIndex.column(), clickedIndex.row(), mInsertImage);
                 mStatusLabel->clear();
                 return true;
-            } else if(mCoordSelection == MOVE_SEL_START) {
-                mSelStartCorner = ui->mView->indexAt(mevent->pos());
-                mCoordSelection = MOVE_SEL_END;
-                mStatusLabel->setText( tr("Click second corner of area to move") );
+            case SEL_START:
+                mSelStartCorner = clickedIndex;
+                mCoordSelection = SEL_END;
+                mStatusLabel->setText( tr("Click lower-right corner of selection") );
                 return true;
-            } else if(mCoordSelection == MOVE_SEL_END) {
-                mSelEndCorner = ui->mView->indexAt(mevent->pos());
-                mCoordSelection = MOVE_FINISH;
-                mStatusLabel->setText( tr("Click upper-left corner of destination") );
-                return true;
-            } else if(mCoordSelection == MOVE_FINISH) {
-                QModelIndex dest = ui->mView->indexAt(mevent->pos());
-                setCursor(Qt::ArrowCursor);
-                mCoordSelection = NONE;
-                mModel->moveSection(
-                    mSelStartCorner,
-                    mSelEndCorner,
-                    dest
+            case SEL_END:
+                mSelEndCorner = clickedIndex;
+                mSelection = QRect(
+                    QPoint(mSelStartCorner.column(), mSelStartCorner.row()),
+                    QPoint(mSelEndCorner.column(), mSelEndCorner.row())
                 );
-                mStatusLabel->clear();
+                mSelActive = true;
+
+                mCoordSelection = NONE;
+                setCursor(Qt::ArrowCursor);
+                mStatusLabel->setText( tr("Selection active!") );
+                return true;
+            case COPY:
+                if(mSelActive) {
+                    mModel->moveSection(mSelection, clickedIndex);
+                    mSelActive = false;
+
+                    mCoordSelection = NONE;
+                    setCursor(Qt::ArrowCursor);
+                    mStatusLabel->clear();
+                }
                 return true;
             }
+        }
+    } else if(event->type() == QEvent::KeyPress) {
+        //TODO: This doesn't seem to work :(
+        QKeyEvent * kevent = static_cast<QKeyEvent*>( event );
+        switch(kevent->key()) {
+        case Qt::Key_Escape:
+            mCoordSelection = NONE;
+            mSelActive = false;
+            setCursor(Qt::ArrowCursor);
+            mStatusLabel->clear();
+            return true;
         }
     }
     return false;
@@ -492,22 +514,40 @@ void MainWindow::slotActionInsert()
     }
 }
 
-void MainWindow::slotActionMoveSelection()
+void MainWindow::slotActionStartSelection()
 {
     setCursor(Qt::CrossCursor);
-    mCoordSelection = MOVE_SEL_START;
-    mStatusLabel->setText( tr("Click first corner of area to move") );
+    mCoordSelection = SEL_START;
+    mStatusLabel->setText( tr("Click upper-left corner of selection") );
 }
-
 
 void MainWindow::slotActionCycleHue()
 {
-    mModel->cycleColors(1);
+    if(mSelActive) {
+        mModel->cycleColors(1, mSelection);
+    } else {
+        mModel->cycleColors(1);
+    }
 }
 
 void MainWindow::slotActionCycleValue()
 {
-    mModel->cycleColors(0);
+    if(mSelActive) {
+        mModel->cycleColors(0, mSelection);
+    } else {
+        mModel->cycleColors(0);
+    }
+}
+
+void MainWindow::slotActionMoveSelection()
+{
+    if(mSelActive) {
+        setCursor(Qt::CrossCursor);
+        mCoordSelection = COPY;
+        mStatusLabel->setText( tr("Click cell to copy to") );
+    } else {
+        mStatusLabel->setText( tr("No selection active!") );
+    }
 }
 
 void MainWindow::slotActionZoom()
