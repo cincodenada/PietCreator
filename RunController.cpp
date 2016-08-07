@@ -302,6 +302,16 @@ void RunController::putInt( int i )
     mWaitCond.wakeOne();
 }
 
+void RunController::setMaxStep( int max_step )
+{
+    set_max_exec_step(max_step);
+}
+
+int RunController::getMaxStep()
+{
+    return get_max_exec_step();
+}
+
 void RunController::win32OutputTimeout()
 {
 #ifdef Q_WS_WIN

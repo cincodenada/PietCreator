@@ -85,6 +85,7 @@ private slots:
     void slotToggleOutput();
     void slotClearOutputView();
     void slotStartDebug();
+    void slotSetMaxExec();
 
     void slotControllerStopped();
     void slotControllerStarted();

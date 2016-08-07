@@ -49,6 +49,9 @@ public:
     void putInt( int i );
     void putChar( const QChar & c );
 
+    void setMaxStep( int max_step );
+    int getMaxStep();
+
     int getInt();
     char getChar();
 

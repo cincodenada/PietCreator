@@ -43,6 +43,7 @@
 #include <QKeySequence>
 #include <QThread>
 #include <QUndoStack>
+#include <QInputDialog>
 
 static const int INITIAL_CODEL_SIZE = 12;
 
@@ -267,6 +268,7 @@ void MainWindow::setupToolbar()
     stopAct->setDisabled( true );
     connect( this, SIGNAL( setStopEnabled( bool ) ), stopAct, SLOT( setEnabled( bool ) ) );
     progMenu->addAction( stopAct );
+    QAction* maxExecAct = progMenu->addAction( tr( "Set &Maximum Execution Step" ), this, SLOT( slotSetMaxExec() ) );
 }
 
 void MainWindow::setModified( bool flag )
@@ -618,6 +620,12 @@ void MainWindow::slotStartDebug()
     emit debugStarted( true );
     emit setStopEnabled( true );
     emit debugSource( mModel->image() );
+}
+
+void MainWindow::slotSetMaxExec()
+{
+    int maxStep = QInputDialog::getInt(this, tr("Set Maximum Execution Step"), tr("Maximum Execution Step:"), mRunController->getMaxStep(), 0);
+    mRunController->setMaxStep(maxStep);
 }
 
 void MainWindow::slotControllerStopped()
