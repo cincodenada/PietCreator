@@ -196,6 +196,8 @@ void MainWindow::setupToolbar()
     connect( this, SIGNAL( validImageDocument( bool ) ), insertAct, SLOT( setEnabled( bool ) ) );
     editMenu->addAction( insertAct );
 
+    ui->mToolBar->addSeparator();
+
     QAction* selAct = ui->mToolBar->addAction( QIcon::fromTheme( "edit-select-all" ), tr( "&Select" ), this, SLOT( slotActionStartSelection() ) );
     selAct->setDisabled( true );
     connect( this, SIGNAL( validImageDocument( bool ) ), selAct, SLOT( setEnabled( bool ) ) );
@@ -516,9 +518,16 @@ void MainWindow::slotActionInsert()
 
 void MainWindow::slotActionStartSelection()
 {
-    setCursor(Qt::CrossCursor);
-    mCoordSelection = SEL_START;
-    mStatusLabel->setText( tr("Click upper-left corner of selection") );
+    if(mSelActive) {
+        mSelActive = false;
+        mCoordSelection = NONE;
+        setCursor(Qt::ArrowCursor);
+        mStatusLabel->clear();
+    } else {
+        setCursor(Qt::CrossCursor);
+        mCoordSelection = SEL_START;
+        mStatusLabel->setText( tr("Click upper-left corner of selection") );
+    }
 }
 
 void MainWindow::slotActionCycleHue()
